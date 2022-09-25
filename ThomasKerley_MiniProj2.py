@@ -5,34 +5,34 @@
 # Due 9/25/2022
 
 import requests
-import numpy as np
+# import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import kerleyFunctions as kf
 
-# Unused for now but could be useful
-# countryList = ['Austria', 'Belgium', 'Brazil', 'Canada','Chile', 'China', 'Czech Republic', 'Denmark', 'Estonia', 
-#     'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Ireland', 'Israel', 
-#     'Italy', 'Japan', 'Luxembourg', 'Mexico', 'Norway', 'Poland', 'Portugal', 'Slovakia', 'Slovenia', 'South Africa',
-#     'Sweden', 'Switzerland', 'Turkey', 'United States']
-# inflationTypes = ['CPI', 'HICP']
+path = "Charts/inflationData.csv"
 
-
-api_url = 'https://api.api-ninjas.com/v1/inflation?'
-response = requests.get(api_url, headers={'X-Api-Key': 'XAnRBGt717T92RQT6/9rig==UD2M9TYjxtSswYLY'})
-if response.status_code == requests.codes.ok:
-    inflationDataFrame = pd.DataFrame(response.json())
+# will skip pulling data if the file is already saved. 
+# or will download and save a new CSV to reduce API calls
+# TODO add an update feature
+if kf.existingFile(path):
+    infDF = pd.read_csv(path, index_col=0)
 else:
-    print("Error:", response.status_code, response.text)
+    api_url = 'https://api.api-ninjas.com/v1/inflation?'
+    response = requests.get(api_url, headers={'X-Api-Key': 'XAnRBGt717T92RQT6/9rig==UD2M9TYjxtSswYLY'})
+    if response.status_code == requests.codes.ok:
+        infDF = pd.DataFrame(response.json())
+        print("Data successfully downloaded")
+        infDF.to_csv(path)
+    else:
+        print("Error:", response.status_code, response.text)
 
-print(inflationDataFrame["country"])
+# remove outliers
+# infDF = kf.removeOutliers(infDF)
 
-# print largest & smallest monthly rates
-# print largest & smallest yearly rates
-# print avg rates
-
-
-# scatter plot of monthly/yearly rate change
+# print stats
+infDF.agg({"monthly_rate_pct": ["min", "max", "median", "mean", "std"],
+    "yearly_rate_pct": ["min", "max", "median", "mean", "std"]})
 
 # Start with a square Figure.
 fig = plt.figure(figsize=(6, 6))
@@ -62,6 +62,11 @@ ax.set(aspect=1)
 ax_histx = ax.inset_axes([0, 1.05, 1, 0.25], sharex=ax)
 ax_histy = ax.inset_axes([1.05, 0, 0.25, 1], sharey=ax)
 # Draw the scatter plot and marginals.
-kf.scatter_hist(inflationDataFrame["monthly_rate_pct"], inflationDataFrame["yearly_rate_pct"], ax, ax_histx, ax_histy)
+kf.scatter_hist(infDF["monthly_rate_pct"], infDF["yearly_rate_pct"], ax, ax_histx, ax_histy)
 
-plt.show()
+# Format the chart and export it to a saved file.
+fname = "Charts/Master Chart"
+plt.title("Rate of inflation")
+plt.xlabel("Monthly Delta")
+plt.ylabel("Yearly Delta")
+plt.savefig(fname, bbox_inches='tight')
