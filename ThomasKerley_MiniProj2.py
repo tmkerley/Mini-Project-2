@@ -5,7 +5,6 @@
 # Due 9/25/2022
 
 import requests
-# import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import kerleyFunctions as kf
