@@ -17,6 +17,7 @@ path = "Charts/inflationData.csv"
 # TODO add an update feature
 if kf.existingFile(path):
     infDF = pd.read_csv(path, index_col=0)
+    print("File loaded.")
 else:
     api_url = 'https://api.api-ninjas.com/v1/inflation?'
     response = requests.get(api_url, headers={'X-Api-Key': 'XAnRBGt717T92RQT6/9rig==UD2M9TYjxtSswYLY'})
@@ -28,12 +29,15 @@ else:
         print("Error:", response.status_code, response.text)
 
 # remove outliers
-# infDF = kf.removeOutliers(infDF)
+infDF = kf.removeOutliers(infDF, "monthly_rate_pct")
+infDF = kf.removeOutliers(infDF, "yearly_rate_pct")
 
 # print stats
-infDF.agg({"monthly_rate_pct": ["min", "max", "median", "mean", "std"],
-    "yearly_rate_pct": ["min", "max", "median", "mean", "std"]})
+print(infDF.agg({
+    "monthly_rate_pct": ["min", "max", "median", "mean", "std"],
+    "yearly_rate_pct": ["min", "max", "median", "mean", "std"]}))
 
+print("Plotting Data...")
 # Start with a square Figure.
 fig = plt.figure(figsize=(6, 6))
 # Add a gridspec with two rows and two columns and a ratio of 1 to 4 between
@@ -70,3 +74,9 @@ plt.title("Rate of inflation")
 plt.xlabel("Monthly Delta")
 plt.ylabel("Yearly Delta")
 plt.savefig(fname, bbox_inches='tight')
+
+# Check if the file was created successfully
+if kf.existingFile(fname + ".png"):
+    print("Chart Created!")
+else:
+    print("Chart file creation error.")

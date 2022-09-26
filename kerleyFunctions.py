@@ -21,6 +21,10 @@ def existingFile(path):
 
 # matplotlib scatter 
 def scatter_hist(x, y, ax, ax_histx, ax_histy):
+    # no labels
+    ax_histx.tick_params(axis="x", labelbottom=False)
+    ax_histy.tick_params(axis="y", labelleft=False)
+
     # the scatter plot:
     ax.scatter(x, y)
 
@@ -33,21 +37,10 @@ def scatter_hist(x, y, ax, ax_histx, ax_histy):
     ax_histx.hist(x, bins=bins)
     ax_histy.hist(y, bins=bins, orientation='horizontal')
 
-def removeOutliers(data):
-    #find Q1, Q3, and interquartile range for each month
-    q1 = np.quantile(data, q=.25, axis="monthly_rate_pct")
-    q3 = np.quantile(data, q=.75, axis="monthly_rate_pct")
-    iqr = data.apply(stats.iqr)
-
-    #only keep rows in dataframe that have values within 1.5*IQR of Q1 and Q3 monthly
-    data_clean = data[~((data < (q1-1.5*iqr)) | (data > (q3+1.5*iqr))).any(axis=1)]
-
-    #find Q1, Q3, and interquartile range for each year
-    q1 = data.quantile(q=.25, axis="yearly_rate_pct")
-    q3 = data.quantile(q=.75, axis="yearly_rate_pct")
-    iqr = data.apply(stats.iqr)
-
-    #only keep rows in dataframe that have values within 1.5*IQR of Q1 and Q3 yearly
-    data_clean = data[~((data < (q1-1.5*iqr)) | (data > (q3+1.5*iqr))).any(axis=1)]
-
-    return data_clean
+# remove outliers from the data set
+def removeOutliers(data, arr):
+    # calculate the z-value of the data subset
+    z = np.abs(stats.zscore(data[arr]))
+    # add z value to dataframe
+    data["Z-" + arr] = z
+    return data[data["Z-" + arr] < 3]    
